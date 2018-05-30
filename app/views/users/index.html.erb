@@ -1,0 +1,26 @@
+<div>
+  <div class="row">
+    <div class="col-lg-12 text-center">
+      <h1 class="title">Hashtag Statistics</h1>
+    </div>
+    <div class="col-lg-12 form-group">
+      <table class="table">
+        <thead>
+          <th>No</th>
+          <th>Link</th>
+          <th>Comments</th>
+        </thead>
+        <tbody>
+         <% for i in 0.. @comment_count.length-1 %>
+          <tr>
+            <td><%=i+1%></td>
+            <td><%= @post_dom[i]%></td>
+            <td><%= link_to "#{@comment_count[i]}", show_path(id: i) %></td>
+          </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%= @comments%>
