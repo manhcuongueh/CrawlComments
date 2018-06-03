@@ -11,13 +11,12 @@
           <th>Comments</th>
         </thead>
         <tbody>
-         <% for i in 0.. @comment_count.length-1 %>
+         <% @links.each do |link|%>
           <tr>
-            <td><%=i+1%></td>
-            <td><%= @post_dom[i]%></td>
-            <td><%= link_to "#{@comment_count[i]}", show_path(id: i) %></td>
-          </tr>
-          <%end%>
+            <td><%=link.id+1%></td>
+            <td><%=link_to "#{link.link}", link.link%></td>
+            <td><%= link_to "#{@comment_count[link.id]}", show_path(id: link.id) %></td>   
+        <%end%>
         </tbody>
       </table>
     </div>

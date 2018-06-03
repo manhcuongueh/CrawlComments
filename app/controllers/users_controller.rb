@@ -1,14 +1,19 @@
 class UsersController < ApplicationController
     def index    
+        @links=Link.all
+        @comment_count=[]
+        for i in 0..@links.length-1
+            count=Comment.where('id = ?', i)
+            @comment_count.push(count.length)
+        end
         
+       
     end
 
     def create
         
         #declare dom of posts
         @post_dom=[]
-
-        @comment_count=[]
         #Get Instagram Url
         @insta_url=params[:insta_url]
         #run chrome
@@ -38,8 +43,14 @@ class UsersController < ApplicationController
          #Get exactly 100 post
          @post_dom=@post_dom[0..99]
          Comment.all.delete_all
+         Link.all.delete_all
          @k=0
         for i in 0..@post_dom.length-1   
+                links=Link.new(
+                    id: i ,
+                    link: @post_dom[i]
+                )
+                links.save
                 @@bot.navigate.to "#{@post_dom[i]}"
                 @start_time= Time.now
                 while @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@role="button"]').size > 0 do 
@@ -74,18 +85,11 @@ class UsersController < ApplicationController
 
 
                  end
-                # find hashtag
-                #dom=@@bot.find_element(:class, '_b0tqa')
-                #dom=dom.find_elements(:tag_name, 'a')
-                #for i in dom
-                    #if i.text.include? "#"
-                    #@hashtags.push(i.text)
-                    #end
-                #end
+    
                 #find comments
                 dom_comment=@@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li')
                 dom_comment.shift
-                @comment_count.push(dom_comment.length)     
+                    
                 for d in dom_comment
                     comments=Comment.new(
                         id: i ,
