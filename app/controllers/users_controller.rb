@@ -13,23 +13,18 @@ class UsersController < ApplicationController
         @insta_url=params[:insta_url]
         #run chrome
         @@bot = Selenium::WebDriver.for :chrome 
-        @@bot.navigate.to "https://www.instagram.com/accounts/login/?force_classic_login"
-        sleep 1
-        #using username and password to login
-        @@bot.find_element(:id, 'id_username').send_keys 'cuong_manh248'
-        @@bot.find_element(:id, 'id_password').send_keys '24081991'
-        @@bot.find_element(:class, 'button-green').click
         sleep 1
         @@bot.navigate.to "#{@insta_url}"  
         sleep 1    
+        @@bot.find_element(:xpath, '/html/body/span/section/nav/div[2]/div/div/div[3]/div/section/div/a').click
         #scroll down the account page and save dom
-        for i in 0..24
-            @@bot.action.send_keys(:page_down).perform
+        for i in 0..8
+            @@bot.action.send_keys(:end).perform
             sleep 1
             #save dom after 8 times press page down button
-            if i%8==0
+            if i%4==0
                 # elements contain the content of a post
-                dom=@@bot.find_elements(:class, '_mck9w')
+                dom=@@bot.find_elements(:xpath, '/html/body/span/section/main/div/article/div[1]/div/div/div')
                 for i in dom
                     dom=i.find_element(:tag_name,'a')['href']
                     @post_dom.push(dom)   
@@ -37,16 +32,48 @@ class UsersController < ApplicationController
             end 
         end
          #avoid duplicate when save dom
+         
          @post_dom=@post_dom.uniq
+         @a=@post_dom.length
          #Get exactly 100 post
          @post_dom=@post_dom[0..99]
          Comment.all.delete_all
-        for i in 0..@post_dom.length-1
+         @k=0
+        for i in 0..@post_dom.length-1   
                 @@bot.navigate.to "#{@post_dom[i]}"
-                while @@bot.find_elements(:class, '_m3m1c').size > 0 do
-                   @@bot.find_element(:class, '_m3m1c').click  
-                   sleep 0.5
-                end
+                @start_time= Time.now
+                while @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@role="button"]').size > 0 do 
+                    @@bot.find_element(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a').click
+                    sleep 0.5
+                    if Time.now > @start_time + 120
+                        sleep 3
+                        if @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@disabled]').size > 0 && @k==0
+                         
+                            @@bot.quit()
+                            @@bot = Selenium::WebDriver.for :chrome 
+                            @@bot.navigate.to "https://www.instagram.com/accounts/login/?force_classic_login"
+                            sleep 0.5
+                            #using username and password to login
+                            @@bot.find_element(:id, 'id_username').send_keys 'cuong_manh248'
+                            @@bot.find_element(:id, 'id_password').send_keys '24081991'
+                            @@bot.find_element(:class, 'button-green').click
+                            sleep 0.5
+                            @@bot.navigate.to "#{@post_dom[i]}"  
+                            @k=1
+                            @start_time= Time.now
+                        elsif @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@disabled]').size > 0 && @k==1
+                            @@bot.quit()
+                            @@bot = Selenium::WebDriver.for :chrome 
+                            @@bot.navigate.to "#{@post_dom[i]}"
+                            sleep 0.5
+                            @@bot.find_element(:xpath, '/html/body/span/section/nav/div[2]/div/div/div[3]/div/section/div/a').click
+                            @k=0
+                            @start_time= Time.now
+                        end
+                    end
+
+
+                 end
                 # find hashtag
                 #dom=@@bot.find_element(:class, '_b0tqa')
                 #dom=dom.find_elements(:tag_name, 'a')
@@ -56,18 +83,17 @@ class UsersController < ApplicationController
                     #end
                 #end
                 #find comments
-                dom_comment=@@bot.find_elements(:class, '_ezgzd')
+                dom_comment=@@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li')
                 dom_comment.shift
                 @comment_count.push(dom_comment.length)     
                 for d in dom_comment
                     comments=Comment.new(
                         id: i ,
                         username:d.find_element(:tag_name, 'a')['title'],
-                        body:d.find_element(:tag_name, 'span').text
+                      body:d.find_element(:tag_name, 'span').text
                     )
                     comments.save
                 end
-                
     
         end
             render 'index'
