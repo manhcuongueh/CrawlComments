@@ -6,7 +6,6 @@ class UsersController < ApplicationController
             count=Comment.where('id = ?', i)
             @comment_count.push(count.length)
         end
-        
        
     end
 
@@ -31,15 +30,16 @@ class UsersController < ApplicationController
                 # elements contain the content of a post
                 dom=@@bot.find_elements(:xpath, '/html/body/span/section/main/div/article/div[1]/div/div/div')
                 for i in dom
-                    dom=i.find_element(:tag_name,'a')['href']
-                    @post_dom.push(dom)   
+                    if i.find_elements(:tag_name,'a').size>0
+                        dom=i.find_element(:tag_name,'a')['href']
+                        @post_dom.push(dom) 
+                    end   
                 end      
             end 
         end
          #avoid duplicate when save dom
          
          @post_dom=@post_dom.uniq
-         @a=@post_dom.length
          #Get exactly 100 post
          @post_dom=@post_dom[0..99]
          Comment.all.delete_all
@@ -55,7 +55,7 @@ class UsersController < ApplicationController
                 @start_time= Time.now
                 while @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@role="button"]').size > 0 do 
                     @@bot.find_element(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a').click
-                    sleep 0.5
+                    sleep 0.7
                     if Time.now > @start_time + 120
                         sleep 3
                         if @@bot.find_elements(:xpath, '/html/body/span/section/main/div/div/article/div[2]/div[1]/ul/li[2]/a[@disabled]').size > 0 && @k==0
@@ -100,6 +100,9 @@ class UsersController < ApplicationController
                 end
     
         end
+            @@bot.quit()
+            #get data from database
+            index
             render 'index'
     end
     def show
